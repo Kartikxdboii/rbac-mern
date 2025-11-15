@@ -7,32 +7,32 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { Loader2, UserPlus } from "lucide-react";
-
+import { NavBar } from "@/components/NavBar";
 export default function AdminRegister() {
   const utils = trpc.useUtils();
   const [formData, setFormData] = useState({
+    username: "",
     name: "",
     email: "",
     password: "",
     role: "viewer" as "admin" | "editor" | "viewer",
   });
-
   const registerMutation = trpc.admin.registerUser.useMutation({
     onSuccess: () => {
       toast.success("User registered successfully");
-      setFormData({ name: "", email: "", password: "", role: "viewer" });
+      setFormData({ username: "", name: "", email: "", password: "", role: "viewer" });
       utils.admin.users.invalidate();
     },
     onError: (error) => toast.error(error.message),
   });
-
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     registerMutation.mutate(formData);
   };
-
   return (
-    <div className="container mx-auto py-8 max-w-2xl">
+    <>
+      <NavBar />
+      <div className="container mx-auto py-8 max-w-2xl">
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -43,6 +43,15 @@ export default function AdminRegister() {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <Label>Username (for login)</Label>
+              <Input
+                value={formData.username}
+                onChange={(e) => setFormData({ ...formData, username: e.target.value })}
+                placeholder="username"
+                required
+              />
+            </div>
             <div>
               <Label>Name</Label>
               <Input
@@ -93,6 +102,8 @@ export default function AdminRegister() {
           </form>
         </CardContent>
       </Card>
-    </div>
+      </div>
+    </>
   );
 }
+

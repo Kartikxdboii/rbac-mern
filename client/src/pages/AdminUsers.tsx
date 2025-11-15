@@ -9,7 +9,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Loader2 } from "lucide-react";
-
 export default function AdminUsersPage() {
   return (
     <ProtectedRoute requiredRole="admin">
@@ -21,48 +20,34 @@ export default function AdminUsersPage() {
     </ProtectedRoute>
   );
 }
-
 function UsersTab() {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const { data: usersData, isLoading, refetch } = trpc.admin.users.useQuery({
     limit: 100,
     offset: 0,
   });
-  const { data: customRoles } = trpc.admin.customRoles.useQuery();
-
   const updateRoleMutation = trpc.admin.updateUserRole.useMutation({
     onSuccess: () => {
       refetch();
     },
   });
-
-  const createUserMutation = trpc.admin.createUser.useMutation({
+  const createUserMutation = trpc.admin.registerUser.useMutation({
     onSuccess: () => {
       refetch();
       setIsCreateOpen(false);
     },
   });
-
   const deleteUserMutation = trpc.admin.deleteUser.useMutation({
     onSuccess: () => {
       refetch();
     },
   });
-
-  const assignCustomRoleMutation = trpc.admin.assignCustomRole.useMutation({
-    onSuccess: () => {
-      refetch();
-    },
-  });
-
   const handleRoleChange = (userId: number, newRole: "admin" | "editor" | "viewer") => {
     updateRoleMutation.mutate({ userId, role: newRole });
   };
-
   const handleCreateUser = (formData: any) => {
     createUserMutation.mutate(formData);
   };
-
   if (isLoading) {
     return (
       <Card>
@@ -72,7 +57,6 @@ function UsersTab() {
       </Card>
     );
   }
-
   return (
   <div className="space-y-6">
       <div className="bg-white rounded-2xl shadow-lg p-8">
@@ -110,7 +94,6 @@ function UsersTab() {
                   <th className="text-left py-3 px-4 font-medium">Name</th>
                   <th className="text-left py-3 px-4 font-medium">Email</th>
                   <th className="text-left py-3 px-4 font-medium">Role</th>
-                  <th className="text-left py-3 px-4 font-medium">Custom Role</th>
                   <th className="text-left py-3 px-4 font-medium">Created</th>
                   <th className="text-left py-3 px-4 font-medium">Actions</th>
                 </tr>
@@ -122,23 +105,6 @@ function UsersTab() {
                     <td className="py-3 px-4">{user.email || "N/A"}</td>
                     <td className="py-3 px-4">
                       <Badge variant={user.role === "admin" ? "default" : "secondary"}>{user.role}</Badge>
-                    </td>
-                    <td className="py-3 px-4">
-                      <Select
-                        value={user.customRoleId == null ? "none" : String(user.customRoleId)}
-                        onValueChange={(value) => assignCustomRoleMutation.mutate({ userId: user.id, customRoleId: value === "none" ? null : Number(value) })}
-                        disabled={assignCustomRoleMutation.isPending}
-                      >
-                        <SelectTrigger className="w-40">
-                          <SelectValue placeholder="Select custom role" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="none">None</SelectItem>
-                          {customRoles?.map((r: any) => (
-                            <SelectItem key={r.id} value={String(r.id)}>{r.name}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
                     </td>
                     <td className="py-3 px-4 text-xs text-muted-foreground">
                       {new Date(user.createdAt).toLocaleDateString()}
@@ -159,7 +125,6 @@ function UsersTab() {
     </div>
   );
 }
-
 function RoleSelector({ userId, currentRole, onRoleChange, isLoading }: { userId: number; currentRole: string; onRoleChange: (userId: number, role: "admin" | "editor" | "viewer") => void; isLoading: boolean; }) {
   return (
     <Select value={currentRole} onValueChange={(value) => onRoleChange(userId, value as "admin" | "editor" | "viewer")} disabled={isLoading}>
@@ -174,17 +139,18 @@ function RoleSelector({ userId, currentRole, onRoleChange, isLoading }: { userId
     </Select>
   );
 }
-
 function CreateUserForm({ onSubmit, isLoading }: { onSubmit: (data: any) => void; isLoading: boolean }) {
-  const [formData, setFormData] = useState({ name: "", email: "", role: "viewer" });
-
+  const [formData, setFormData] = useState({ username: "", name: "", email: "", password: "pass123", role: "viewer" });
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     onSubmit(formData);
   };
-
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
+      <div>
+        <label className="text-sm font-medium">Username (for login)</label>
+        <Input value={formData.username} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, username: e.target.value })} placeholder="username" required />
+      </div>
       <div>
         <label className="text-sm font-medium">Name</label>
         <Input value={formData.name} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, name: e.target.value })} placeholder="User full name" required />
@@ -192,6 +158,10 @@ function CreateUserForm({ onSubmit, isLoading }: { onSubmit: (data: any) => void
       <div>
         <label className="text-sm font-medium">Email</label>
         <Input type="email" value={formData.email} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, email: e.target.value })} placeholder="user@example.com" required />
+      </div>
+      <div>
+        <label className="text-sm font-medium">Password</label>
+        <Input type="password" value={formData.password} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, password: e.target.value })} placeholder="Minimum 6 characters" required minLength={6} />
       </div>
       <div>
         <label className="text-sm font-medium">Role</label>
@@ -213,3 +183,4 @@ function CreateUserForm({ onSubmit, isLoading }: { onSubmit: (data: any) => void
     </form>
   );
 }
+

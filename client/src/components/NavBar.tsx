@@ -4,10 +4,8 @@ import { Link } from "wouter";
 import { Button } from "./ui/button";
 import { NotificationBell } from "./NotificationBell";
 import { LogOut, User } from "lucide-react";
-
 export function NavBar() {
   const { user, logout } = useAuth();
-
   return (
     <nav className="sticky top-0 z-50 bg-white/95 backdrop-blur border-b shadow-sm">
       <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
@@ -22,7 +20,7 @@ export function NavBar() {
           <Link href="/posts">
             <Button variant="ghost" size="sm">Posts</Button>
           </Link>
-          {user && (
+          {user?.role === 'admin' && (
             <Link href="/admin">
               <Button variant="ghost" size="sm">Admin</Button>
             </Link>
@@ -45,3 +43,4 @@ export function NavBar() {
     </nav>
   );
 }
+

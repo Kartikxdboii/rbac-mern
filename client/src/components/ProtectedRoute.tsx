@@ -1,32 +1,14 @@
-/**
- * ProtectedRoute component for guarding routes based on user role
- * Redirects to login or 403 page if user lacks required access
- */
-
 import React from "react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { usePermissions } from "@/hooks/usePermissions";
 import { getLoginUrl } from "@/const";
 import { useLocation } from "wouter";
-
 interface ProtectedRouteProps {
   children: React.ReactNode;
   requiredRole?: "admin" | "editor" | "viewer" | ("admin" | "editor" | "viewer")[];
   requiredPermission?: string;
   fallback?: React.ReactNode;
 }
-
-/**
- * Component that guards routes based on user authentication and role
- * Usage:
- *   <ProtectedRoute requiredRole="admin">
- *     <AdminDashboard />
- *   </ProtectedRoute>
- *
- *   <ProtectedRoute requiredPermission="posts:create">
- *     <CreatePost />
- *   </ProtectedRoute>
- */
 export function ProtectedRoute({
   children,
   requiredRole,
@@ -36,8 +18,6 @@ export function ProtectedRoute({
   const { user, loading, isAuthenticated } = useAuth();
   const { hasPermission, role } = usePermissions();
   const [, navigate] = useLocation();
-
-  // Still loading auth state
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -48,21 +28,15 @@ export function ProtectedRoute({
       </div>
     );
   }
-
-  // Not authenticated
   if (!isAuthenticated || !user) {
-    // Redirect to login (client-side) to avoid full reload loop
     const loginUrl = getLoginUrl();
     if (loginUrl.startsWith("/")) {
       navigate(loginUrl);
     } else {
-      // external OAuth portal
       window.location.href = loginUrl;
     }
     return null;
   }
-
-  // Check role requirement
   if (requiredRole) {
     const roles = Array.isArray(requiredRole) ? requiredRole : [requiredRole];
     if (!roles.includes(user.role as any)) {
@@ -90,8 +64,6 @@ export function ProtectedRoute({
       );
     }
   }
-
-  // Check permission requirement
   if (requiredPermission && !hasPermission(requiredPermission)) {
     return (
       fallback || (
@@ -115,6 +87,6 @@ export function ProtectedRoute({
       )
     );
   }
-
   return <>{children}</>;
 }
+

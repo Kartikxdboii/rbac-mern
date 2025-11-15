@@ -12,3 +12,4 @@ export const ENV = {
   ownerPassword: process.env.OWNER_PASSWORD ?? "",
   ownerPasswordHash: process.env.OWNER_PASSWORD_HASH ?? "",
 };
+

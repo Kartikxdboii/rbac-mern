@@ -5,26 +5,20 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { Bell, Check, CheckCheck } from "lucide-react";
-
 export function NotificationBell() {
   const [open, setOpen] = useState(false);
   const utils = trpc.useUtils();
-
   const { data: notifications } = trpc.user.notifications.useQuery(
     { unreadOnly: false },
     { refetchInterval: 10000 }
   );
-
   const markReadMutation = trpc.user.markNotificationRead.useMutation({
     onSuccess: () => utils.user.notifications.invalidate(),
   });
-
   const markAllReadMutation = trpc.user.markAllNotificationsRead.useMutation({
     onSuccess: () => utils.user.notifications.invalidate(),
   });
-
   const unreadCount = notifications?.filter((n) => !n.read).length || 0;
-
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
@@ -97,3 +91,4 @@ export function NotificationBell() {
     </Popover>
   );
 }
+

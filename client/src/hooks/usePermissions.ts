@@ -1,12 +1,5 @@
-/**
- * usePermissions hook for checking user permissions on the frontend
- * Provides permission checking utilities for conditional rendering and UI control
- */
-
 import { useAuth } from "@/_core/hooks/useAuth";
-
 export type UserRole = "admin" | "editor" | "viewer";
-
 export interface PermissionCheckResult {
   hasPermission: (permission: string) => boolean;
   isAdmin: () => boolean;
@@ -15,10 +8,6 @@ export interface PermissionCheckResult {
   isEditorOrAdmin: () => boolean;
   role: UserRole | null;
 }
-
-/**
- * Permission matrix matching the backend
- */
 const ROLE_PERMISSIONS: Record<string, string[]> = {
   admin: [
     "posts:create",
@@ -44,38 +33,25 @@ const ROLE_PERMISSIONS: Record<string, string[]> = {
     "posts:read",
   ],
 };
-
-/**
- * Hook to check user permissions
- * Usage:
- *   const { hasPermission, isAdmin } = usePermissions();
- *   if (hasPermission("posts:create")) { ... }
- */
 export function usePermissions(): PermissionCheckResult {
   const { user } = useAuth();
-
   const hasPermission = (permission: string): boolean => {
     if (!user) return false;
     const permissions = ROLE_PERMISSIONS[user.role] || [];
     return permissions.includes(permission);
   };
-
   const isAdmin = (): boolean => {
     return user?.role === "admin";
   };
-
   const isEditor = (): boolean => {
     return user?.role === "editor";
   };
-
   const isViewer = (): boolean => {
     return user?.role === "viewer";
   };
-
   const isEditorOrAdmin = (): boolean => {
     return user?.role === "admin" || user?.role === "editor";
   };
-
   return {
     hasPermission,
     isAdmin,
@@ -85,3 +61,4 @@ export function usePermissions(): PermissionCheckResult {
     role: (user?.role as UserRole) || null,
   };
 }
+

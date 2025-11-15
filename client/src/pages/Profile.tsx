@@ -8,22 +8,18 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { Loader2, User, Lock, Monitor } from "lucide-react";
-
 export default function Profile() {
   const { user } = useAuth();
   const utils = trpc.useUtils();
-
   const [profileData, setProfileData] = useState({
     name: user?.name || "",
     email: user?.email || "",
   });
-
   const [passwordData, setPasswordData] = useState({
     currentPassword: "",
     newPassword: "",
     confirmPassword: "",
   });
-
   const updateProfileMutation = trpc.user.updateProfile.useMutation({
     onSuccess: () => {
       toast.success("Profile updated successfully");
@@ -31,7 +27,6 @@ export default function Profile() {
     },
     onError: (error) => toast.error(error.message),
   });
-
   const changePasswordMutation = trpc.user.changePassword.useMutation({
     onSuccess: () => {
       toast.success("Password changed successfully");
@@ -39,21 +34,17 @@ export default function Profile() {
     },
     onError: (error) => toast.error(error.message),
   });
-
   const { data: sessions } = trpc.user.sessions.useQuery();
-
   const revokeSessionMutation = trpc.user.revokeSession.useMutation({
     onSuccess: () => {
       toast.success("Session revoked");
       utils.user.sessions.invalidate();
     },
   });
-
   const handleUpdateProfile = (e: React.FormEvent) => {
     e.preventDefault();
     updateProfileMutation.mutate(profileData);
   };
-
   const handleChangePassword = (e: React.FormEvent) => {
     e.preventDefault();
     if (passwordData.newPassword !== passwordData.confirmPassword) {
@@ -65,11 +56,9 @@ export default function Profile() {
       newPassword: passwordData.newPassword,
     });
   };
-
   return (
     <div className="container mx-auto py-8 max-w-4xl">
       <h1 className="text-3xl font-bold mb-8">Profile Settings</h1>
-
       <Tabs defaultValue="profile">
         <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="profile">
@@ -85,7 +74,6 @@ export default function Profile() {
             Sessions
           </TabsTrigger>
         </TabsList>
-
         <TabsContent value="profile">
           <Card>
             <CardHeader>
@@ -121,7 +109,6 @@ export default function Profile() {
             </CardContent>
           </Card>
         </TabsContent>
-
         <TabsContent value="password">
           <Card>
             <CardHeader>
@@ -166,7 +153,6 @@ export default function Profile() {
             </CardContent>
           </Card>
         </TabsContent>
-
         <TabsContent value="sessions">
           <Card>
             <CardHeader>
@@ -201,3 +187,4 @@ export default function Profile() {
     </div>
   );
 }
+

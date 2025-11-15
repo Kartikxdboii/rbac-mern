@@ -3,7 +3,6 @@ import { drizzle } from 'drizzle-orm/mysql2';
 import mysql from 'mysql2/promise';
 import { users } from '../drizzle/schema';
 import { hashPassword } from './_core/localAuth';
-
 async function getDb() {
   const url = process.env.DATABASE_URL;
   if (!url) throw new Error('DATABASE_URL not set');
@@ -13,15 +12,13 @@ async function getDb() {
     port: u.port ? Number(u.port) : 3306,
     user: decodeURIComponent(u.username),
     password: decodeURIComponent(u.password),
-    database: u.pathname.replace(/^\//, ''),
+    database: u.pathname.replace(/^\
   });
   return drizzle(pool);
 }
-
 async function main() {
   const db = await getDb();
   console.log('[Seed] Creating sample users...');
-
   const sampleUsers = [
     {
       openId: 'admin2',
@@ -72,12 +69,10 @@ async function main() {
       loginMethod: 'local',
     },
   ];
-
   for (const user of sampleUsers) {
     await db.insert(users).values(user);
     console.log(`  ✓ Created ${user.role}: ${user.name} (${user.email})`);
   }
-
   console.log('\n[Seed] ✅ Sample users created successfully!');
   console.log('\n📋 Login Credentials (All passwords: pass123):');
   console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
@@ -94,11 +89,10 @@ async function main() {
   console.log('   Username: viewer1 | Password: pass123');
   console.log('   Username: viewer2 | Password: pass123');
   console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-  
   process.exit(0);
 }
-
 main().catch(err => {
   console.error('[Seed] Failed:', err);
   process.exit(1);
 });
+

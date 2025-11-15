@@ -1,7 +1,3 @@
-/**
- * Home page with RBAC information and navigation
- */
-
 import { useAuth } from "@/_core/hooks/useAuth";
 import { usePermissions } from "@/hooks/usePermissions";
 import { Button } from "@/components/ui/button";
@@ -11,11 +7,9 @@ import { APP_LOGO, APP_TITLE, getLoginUrl } from "@/const";
 import { Link } from "wouter";
 import { LogOut, Shield, Users, FileText, BarChart3, Eye, PlusCircle, Settings, Check } from "lucide-react";
 import { NavBar } from "@/components/NavBar";
-
 export default function Home() {
   const { user, loading, isAuthenticated, logout } = useAuth();
   const { hasPermission, isAdmin, isEditor, isViewer, role } = usePermissions();
-
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -26,7 +20,6 @@ export default function Home() {
       </div>
     );
   }
-
   if (!isAuthenticated || !user) {
     return (
       <div className="min-h-screen flex flex-col">
@@ -44,7 +37,6 @@ export default function Home() {
                 </Button>
               </div>
             </div>
-
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
               <Card className="hover:shadow-lg transition-shadow rounded-2xl">
                 <CardHeader>
@@ -57,7 +49,6 @@ export default function Home() {
                   </p>
                 </CardContent>
               </Card>
-
               <Card className="hover:shadow-lg transition-shadow rounded-2xl">
                 <CardHeader>
                   <FileText className="w-8 h-8 mb-2 text-indigo-600" />
@@ -69,7 +60,6 @@ export default function Home() {
                   </p>
                 </CardContent>
               </Card>
-
               <Card className="hover:shadow-lg transition-shadow rounded-2xl">
                 <CardHeader>
                   <BarChart3 className="w-8 h-8 mb-2 text-indigo-600" />
@@ -87,7 +77,6 @@ export default function Home() {
       </div>
     );
   }
-
   return (
     <div className="min-h-screen flex flex-col">
       <NavBar />
@@ -100,7 +89,6 @@ export default function Home() {
               <span className="px-3 py-1 bg-indigo-100 text-indigo-700 rounded-full text-sm font-medium">{role?.toUpperCase()}</span>
             </div>
           </div>
-
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
             <Card className="rounded-2xl">
               <CardHeader>
@@ -135,7 +123,6 @@ export default function Home() {
                 </div>
               </CardContent>
             </Card>
-
             <Card className="rounded-2xl">
               <CardHeader>
                 <CardTitle>Quick Actions</CardTitle>
@@ -163,7 +150,6 @@ export default function Home() {
                 )}
               </CardContent>
             </Card>
-
             <Card className="rounded-2xl">
               <CardHeader>
                 <CardTitle>System Stats</CardTitle>
@@ -174,7 +160,6 @@ export default function Home() {
               </CardContent>
             </Card>
           </div>
-
           <section className="bg-gray-50 p-6 rounded-2xl mt-10 border">
             <h2 className="text-lg font-semibold mb-3">About This Application</h2>
             <p className="text-gray-600 mb-4">
@@ -203,3 +188,4 @@ export default function Home() {
     </div>
   );
 }
+

@@ -6,7 +6,6 @@ import { Link } from "wouter";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { usePermissions } from "@/hooks/usePermissions";
 import { useAuth } from "@/_core/hooks/useAuth";
-
 export default function AdminDashboardPage() {
   return (
     <ProtectedRoute requiredRole="admin">
@@ -16,7 +15,6 @@ export default function AdminDashboardPage() {
     </ProtectedRoute>
   );
 }
-
 function StatBlock({ label, value }: { label: string; value: number | undefined }) {
   return (
     <div className="flex flex-col items-start">
@@ -25,20 +23,17 @@ function StatBlock({ label, value }: { label: string; value: number | undefined 
     </div>
   );
 }
-
 function AdminDashboard() {
   const { user } = useAuth();
   const statsQuery = trpc.admin.stats.useQuery();
   const recentLogsQuery = trpc.admin.auditLogs.useQuery({ limit: 10, offset: 0 });
   const { hasPermission, role, isAdmin } = usePermissions();
-
   return (
   <div className="space-y-8 max-w-full overflow-x-hidden">
     <div className="bg-white rounded-2xl shadow p-8">
         <h1 className="text-3xl font-semibold">Welcome, <span className="text-indigo-600">{user?.name || 'Admin'} 👋</span></h1>
         <p className="text-gray-500 mt-2">High-level overview of system activity and access.</p>
       </div>
-
   <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full overflow-hidden">
     <div className="bg-white rounded-2xl shadow p-6">
           <h2 className="text-sm font-semibold text-gray-600 mb-4">Your Role</h2>
@@ -63,7 +58,6 @@ function AdminDashboard() {
             )}
           </ul>
         </div>
-
   <div className="bg-white rounded-2xl shadow p-6">
           <h2 className="text-sm font-semibold text-gray-600 mb-4">Quick Actions</h2>
           <div className="space-y-3">
@@ -95,7 +89,6 @@ function AdminDashboard() {
             )}
           </div>
         </div>
-
   <div className="bg-white rounded-2xl shadow p-6">
           <h2 className="text-sm font-semibold text-gray-600 mb-4">System Stats</h2>
           <div className="grid grid-cols-2 gap-6">
@@ -106,7 +99,6 @@ function AdminDashboard() {
           </div>
         </div>
       </div>
-
       <div className="bg-white rounded-2xl p-6 shadow">
         <h2 className="text-lg font-semibold mb-4">Recent Activity</h2>
         {recentLogsQuery.isLoading ? (
@@ -138,7 +130,6 @@ function AdminDashboard() {
           </Empty>
         )}
       </div>
-
       <section className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8">
         <div className="p-4 bg-white rounded-xl shadow-sm border">
           <Shield className="text-indigo-600 mb-2" />
@@ -159,3 +150,4 @@ function AdminDashboard() {
     </div>
   );
 }
+

@@ -1,8 +1,3 @@
-/**
- * Posts page with RBAC-controlled UI
- * Shows posts based on user role with permission-based actions
- */
-
 import { useState } from "react";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
@@ -16,64 +11,49 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Loader2, Plus, Edit2, Trash2 } from "lucide-react";
-
 export default function Posts() {
   const { user } = useAuth();
   const { hasPermission, isAdmin, isEditor } = usePermissions();
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [editingPost, setEditingPost] = useState<number | null>(null);
-
-  // Fetch posts
   const { data: postsData, isLoading, refetch } = trpc.posts.list.useQuery({
     limit: 20,
     offset: 0,
   });
-
-  // Create post mutation
   const createPostMutation = trpc.posts.create.useMutation({
     onSuccess: () => {
       setIsCreateOpen(false);
       refetch();
     },
   });
-
-  // Update post mutation
   const updatePostMutation = trpc.posts.update.useMutation({
     onSuccess: () => {
       setEditingPost(null);
       refetch();
     },
   });
-
-  // Delete post mutation
   const deletePostMutation = trpc.posts.delete.useMutation({
     onSuccess: () => {
       refetch();
     },
   });
-
   const handleCreatePost = (formData: any) => {
     createPostMutation.mutate(formData);
   };
-
   const handleUpdatePost = (postId: number, formData: any) => {
     updatePostMutation.mutate({ id: postId, ...formData });
   };
-
   const handleDeletePost = (postId: number) => {
     if (confirm("Are you sure you want to delete this post?")) {
       deletePostMutation.mutate({ id: postId });
     }
   };
-
   const canEditPost = (authorId: number) => {
     return isAdmin() || (isEditor() && user?.id === authorId);
   };
-
   const canDeletePost = (authorId: number) => {
     return isAdmin() || (isEditor() && user?.id === authorId);
   };
-
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -81,7 +61,6 @@ export default function Posts() {
       </div>
     );
   }
-
   return (
     <div className="container mx-auto py-8">
       <div className="flex justify-between items-center mb-8">
@@ -93,7 +72,6 @@ export default function Posts() {
             {user?.role === "viewer" && "Read published posts"}
           </p>
         </div>
-
         <PermissionGate permission="posts:create">
           <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
             <DialogTrigger asChild>
@@ -114,7 +92,6 @@ export default function Posts() {
           </Dialog>
         </PermissionGate>
       </div>
-
       {postsData?.posts && postsData.posts.length > 0 ? (
         <div className="grid gap-4">
           {postsData.posts.map((post: any) => (
@@ -154,7 +131,6 @@ export default function Posts() {
                       </Button>
                     </PermissionGateWrapper>
                   )}
-
                   {canDeletePost(post.authorId) && (
                     <PermissionGateWrapper
                       permission={isAdmin() ? "posts:delete" : "posts:delete_own"}
@@ -183,7 +159,6 @@ export default function Posts() {
           </CardContent>
         </Card>
       )}
-
       {editingPost && (
         <Dialog open={!!editingPost} onOpenChange={() => setEditingPost(null)}>
           <DialogContent>
@@ -205,7 +180,6 @@ export default function Posts() {
     </div>
   );
 }
-
 function CreatePostForm({ onSubmit, isLoading }: { onSubmit: (data: any) => void; isLoading: boolean }) {
   const [formData, setFormData] = useState({
     title: "",
@@ -213,12 +187,10 @@ function CreatePostForm({ onSubmit, isLoading }: { onSubmit: (data: any) => void
     status: "draft",
     visibility: "private",
   });
-
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onSubmit(formData);
   };
-
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
@@ -273,7 +245,6 @@ function CreatePostForm({ onSubmit, isLoading }: { onSubmit: (data: any) => void
     </form>
   );
 }
-
 function EditPostForm({ postId, post, onSubmit, isLoading }: { postId: number; post: any; onSubmit: (data: any) => void; isLoading: boolean }) {
   const [formData, setFormData] = useState({
     title: post?.title || "",
@@ -281,12 +252,10 @@ function EditPostForm({ postId, post, onSubmit, isLoading }: { postId: number; p
     status: post?.status || "draft",
     visibility: post?.visibility || "private",
   });
-
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onSubmit(formData);
   };
-
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
@@ -341,3 +310,4 @@ function EditPostForm({ postId, post, onSubmit, isLoading }: { postId: number; p
     </form>
   );
 }
+

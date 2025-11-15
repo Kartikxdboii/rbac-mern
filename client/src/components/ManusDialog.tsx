@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-
 import { Button } from "@/components/ui/button";
 import { APP_TITLE, getLogoUrl } from "@/const";
 import {
@@ -9,7 +8,6 @@ import {
   DialogFooter,
   DialogTitle,
 } from "@/components/ui/dialog";
-
 interface ManusDialogProps {
   title?: string;
   logo?: string;
@@ -18,7 +16,6 @@ interface ManusDialogProps {
   onOpenChange?: (open: boolean) => void;
   onClose?: () => void;
 }
-
 export function ManusDialog({
   title = APP_TITLE,
   logo = getLogoUrl(),
@@ -28,25 +25,21 @@ export function ManusDialog({
   onClose,
 }: ManusDialogProps) {
   const [internalOpen, setInternalOpen] = useState(open);
-
   useEffect(() => {
     if (!onOpenChange) {
       setInternalOpen(open);
     }
   }, [open, onOpenChange]);
-
   const handleOpenChange = (nextOpen: boolean) => {
     if (onOpenChange) {
       onOpenChange(nextOpen);
     } else {
       setInternalOpen(nextOpen);
     }
-
     if (!nextOpen) {
       onClose?.();
     }
   };
-
   return (
     <Dialog
       open={onOpenChange ? open : internalOpen}
@@ -57,7 +50,6 @@ export function ManusDialog({
           <div className="w-20 h-20 bg-white rounded-full border border-[rgba(0,0,0,0.08)] flex items-center justify-center ring-2 ring-primary shadow-sm">
             <img src={logo} alt="App icon" className="w-14 h-14 rounded-full object-cover" />
           </div>
-
           {/* Title and subtitle */}
           <DialogTitle className="text-xl font-semibold text-[#34322d] leading-[26px] tracking-[-0.44px]">
             {title}
@@ -66,7 +58,6 @@ export function ManusDialog({
             Please login with Manus to continue
           </DialogDescription>
         </div>
-
         <DialogFooter className="px-5 py-5">
           {/* Login button */}
           <Button
@@ -80,3 +71,4 @@ export function ManusDialog({
     </Dialog>
   );
 }
+

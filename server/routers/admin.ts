@@ -1,8 +1,3 @@
-/**
- * Admin router for user and role management
- * Restricted to admin users only
- */
-
 import { z } from "zod";
 import { protectedProcedure, router } from "../_core/trpc";
 import type { User, AuditLog } from "../../drizzle/schema";
@@ -36,11 +31,7 @@ import {
 } from "../db";
 import { requireAdmin, generateCorrelationId, throwPermissionDenied, updateCustomRolePermission } from "../rbac";
 import { createCustomRole, deleteCustomRole, listCustomRolePermissions, listCustomRoles, addCustomRolePermission, removeCustomRolePermission, assignUserCustomRole } from "../db";
-
 export const adminRouter = router({
-  /**
-   * Get all users (admin only)
-   */
   users: protectedProcedure
     .use(requireAdmin())
     .input(
@@ -51,9 +42,7 @@ export const adminRouter = router({
     )
     .query(async ({ ctx, input }) => {
       const users = await getAllUsers();
-
       const paginated = users.slice(input.offset, input.offset + input.limit);
-
       return {
         users: paginated,
         total: users.length,
@@ -61,10 +50,6 @@ export const adminRouter = router({
         offset: input.offset,
       };
     }),
-
-  /**
-   * Update a user's role (admin only)
-   */
   updateUserRole: protectedProcedure
     .use(requireAdmin())
     .input(
@@ -75,11 +60,8 @@ export const adminRouter = router({
     )
     .mutation(async ({ ctx, input }) => {
       const correlationId = generateCorrelationId();
-
       try {
         const user = await updateUserRole(input.userId, input.role);
-
-        // Log the role change
         await logAuditEvent({
           userId: ctx.user.id,
           action: "update",
@@ -90,7 +72,6 @@ export const adminRouter = router({
           correlationId,
           metadata: null,
         });
-
         return user;
       } catch (error) {
         await logAuditEvent({
@@ -106,10 +87,6 @@ export const adminRouter = router({
         throw error;
       }
     }),
-
-  /**
-   * Get audit logs (admin only)
-   */
   auditLogs: protectedProcedure
     .use(requireAdmin())
     .input(
@@ -122,19 +99,11 @@ export const adminRouter = router({
       const logs = await getAuditLogs(input.limit, input.offset);
       return logs;
     }),
-
-  /**
-   * Get all role permissions (admin only)
-   */
   rolePermissions: protectedProcedure
     .use(requireAdmin())
     .query(async () => {
       return getAllRolePermissions();
     }),
-
-  /**
-   * Create a new user (admin only)
-   */
   createUser: protectedProcedure
     .use(requireAdmin())
     .input(
@@ -146,12 +115,8 @@ export const adminRouter = router({
     )
     .mutation(async ({ ctx, input }) => {
       const correlationId = generateCorrelationId();
-
       try {
-        // Generate a unique openId for the new user
         const openId = `user-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-
-        // Create the user
         const { upsertUser, getUserByOpenId } = await import("../db");
         await upsertUser({
           openId,
@@ -163,10 +128,7 @@ export const adminRouter = router({
           updatedAt: new Date(),
           lastSignedIn: new Date(),
         });
-
         const newUser = await getUserByOpenId(openId);
-
-        // Log the user creation
         await logAuditEvent({
           userId: ctx.user.id,
           action: "create",
@@ -177,7 +139,6 @@ export const adminRouter = router({
           correlationId,
           metadata: null,
         });
-
         return newUser;
       } catch (error) {
         await logAuditEvent({
@@ -193,36 +154,26 @@ export const adminRouter = router({
         throw error;
       }
     }),
-
-  /**
-   * Get dashboard stats (admin only)
-   */
   stats: protectedProcedure
     .use(requireAdmin())
     .query(async () => {
       const users = (await getAllUsers()) as User[];
-      const logs = (await getAuditLogs(1000, 0)) as AuditLog[]; // Get recent logs
-
-      // Count users by role
+      const logs = (await getAuditLogs(1000, 0)) as AuditLog[]; 
       const roleStats = {
         admin: users.filter((u: User) => u.role === "admin").length,
         editor: users.filter((u: User) => u.role === "editor").length,
         viewer: users.filter((u: User) => u.role === "viewer").length,
       };
-
-      // Count authorization denials
       const denialStats = {
         total: logs.filter((l: AuditLog) => !l.allowed).length,
         byAction: {} as Record<string, number>,
       };
-
       logs
         .filter((l: AuditLog) => !l.allowed)
         .forEach((log: AuditLog) => {
           denialStats.byAction[log.action] =
             (denialStats.byAction[log.action] || 0) + 1;
         });
-
       return {
         totalUsers: users.length,
         roleStats,
@@ -230,31 +181,23 @@ export const adminRouter = router({
         lastUpdated: new Date(),
       };
     }),
-
-  /**
-   * Get available permissions (admin only)
-   */
   availablePermissions: protectedProcedure
     .use(requireAdmin())
     .query(async () => {
       return getAvailablePermissions();
     }),
-
-  // ===== Custom Roles Management =====
   customRoles: protectedProcedure
     .use(requireAdmin())
     .query(async () => {
       const roles = await listCustomRoles();
       return roles;
     }),
-
   customRolePermissions: protectedProcedure
     .use(requireAdmin())
     .input(z.object({ customRoleId: z.number() }))
     .query(async ({ input }) => {
       return listCustomRolePermissions(input.customRoleId);
     }),
-
   createCustomRole: protectedProcedure
     .use(requireAdmin())
     .input(z.object({ name: z.string().min(2).max(64), description: z.string().max(255).optional() }))
@@ -264,7 +207,6 @@ export const adminRouter = router({
       await logAuditEvent({ userId: ctx.user.id, action: 'create', resourceType: 'customRole', resourceId: role?.id ?? null, allowed: true, denialReason: null, correlationId, metadata: null });
       return role;
     }),
-
   deleteCustomRole: protectedProcedure
     .use(requireAdmin())
     .input(z.object({ customRoleId: z.number() }))
@@ -274,7 +216,6 @@ export const adminRouter = router({
       await logAuditEvent({ userId: ctx.user.id, action: 'delete', resourceType: 'customRole', resourceId: input.customRoleId, allowed: true, denialReason: null, correlationId, metadata: null });
       return { success: true } as const;
     }),
-
   addCustomRolePermission: protectedProcedure
     .use(requireAdmin())
     .input(z.object({ customRoleId: z.number(), permission: z.string(), description: z.string().optional() }))
@@ -285,7 +226,6 @@ export const adminRouter = router({
       await logAuditEvent({ userId: ctx.user.id, action: 'create', resourceType: 'customRolePermission', resourceId: (perm as any)?.id ?? null, allowed: true, denialReason: null, correlationId, metadata: null });
       return perm;
     }),
-
   removeCustomRolePermission: protectedProcedure
     .use(requireAdmin())
     .input(z.object({ customRoleId: z.number(), permissionId: z.number(), permission: z.string() }))
@@ -296,7 +236,6 @@ export const adminRouter = router({
       await logAuditEvent({ userId: ctx.user.id, action: 'delete', resourceType: 'customRolePermission', resourceId: input.permissionId, allowed: true, denialReason: null, correlationId, metadata: null });
       return { success: true } as const;
     }),
-
   assignCustomRole: protectedProcedure
     .use(requireAdmin())
     .input(z.object({ userId: z.number(), customRoleId: z.number().nullable() }))
@@ -306,10 +245,6 @@ export const adminRouter = router({
       await logAuditEvent({ userId: ctx.user.id, action: 'update', resourceType: 'user.customRole', resourceId: input.userId, allowed: true, denialReason: null, correlationId, metadata: null });
       return user;
     }),
-
-  /**
-   * Add a permission to a role (admin only)
-   */
   addPermission: protectedProcedure
     .use(requireAdmin())
     .input(
@@ -321,10 +256,8 @@ export const adminRouter = router({
     )
     .mutation(async ({ ctx, input }) => {
       const correlationId = generateCorrelationId();
-
       try {
         await addRolePermission(input.role, input.permission, input.description);
-
         await logAuditEvent({
           userId: ctx.user.id,
           action: "create",
@@ -335,7 +268,6 @@ export const adminRouter = router({
           correlationId,
           metadata: null,
         });
-
         return { success: true };
       } catch (error) {
         await logAuditEvent({
@@ -351,10 +283,6 @@ export const adminRouter = router({
         throw error;
       }
     }),
-
-  /**
-   * Remove a permission from a role (admin only)
-   */
   removePermission: protectedProcedure
     .use(requireAdmin())
     .input(
@@ -364,10 +292,8 @@ export const adminRouter = router({
     )
     .mutation(async ({ ctx, input }) => {
       const correlationId = generateCorrelationId();
-
       try {
         await removeRolePermission(input.permissionId);
-
         await logAuditEvent({
           userId: ctx.user.id,
           action: "delete",
@@ -378,7 +304,6 @@ export const adminRouter = router({
           correlationId,
           metadata: null,
         });
-
         return { success: true };
       } catch (error) {
         await logAuditEvent({
@@ -394,10 +319,6 @@ export const adminRouter = router({
         throw error;
       }
     }),
-
-  /**
-   * Delete a user (admin only)
-   */
   deleteUser: protectedProcedure
     .use(requireAdmin())
     .input(
@@ -407,14 +328,11 @@ export const adminRouter = router({
     )
     .mutation(async ({ ctx, input }) => {
       const correlationId = generateCorrelationId();
-
       try {
         if (input.userId === ctx.user.id) {
           throw new Error("Cannot delete your own account");
         }
-
         await deleteUser(input.userId);
-
         await logAuditEvent({
           userId: ctx.user.id,
           action: "delete",
@@ -425,7 +343,6 @@ export const adminRouter = router({
           correlationId,
           metadata: null,
         });
-
         return { success: true };
       } catch (error) {
         await logAuditEvent({
@@ -441,14 +358,11 @@ export const adminRouter = router({
         throw error;
       }
     }),
-
-  /**
-   * Register new user with password
-   */
   registerUser: protectedProcedure
     .use(requireAdmin())
     .input(
       z.object({
+        username: z.string().min(1).optional(),
         name: z.string().min(1),
         email: z.string().email(),
         password: z.string().min(6),
@@ -484,10 +398,6 @@ export const adminRouter = router({
         throw error;
       }
     }),
-
-  /**
-   * Request password reset
-   */
   requestPasswordReset: protectedProcedure
     .use(requireAdmin())
     .input(z.object({ userId: z.number() }))
@@ -504,10 +414,6 @@ export const adminRouter = router({
       }
       return { token };
     }),
-
-  /**
-   * Reset password with token
-   */
   resetPassword: protectedProcedure
     .input(
       z.object({
@@ -518,26 +424,16 @@ export const adminRouter = router({
     .mutation(async ({ input }) => {
       const reset = await verifyPasswordResetToken(input.token);
       if (!reset) throw new Error("Invalid or expired token");
-      
       await resetUserPassword(reset.userId, input.newPassword);
       await markPasswordResetUsed(input.token);
-      
       return { success: true };
     }),
-
-  /**
-   * Get user sessions
-   */
   userSessions: protectedProcedure
     .use(requireAdmin())
     .input(z.object({ userId: z.number() }))
     .query(async ({ input }) => {
       return getUserSessions(input.userId);
     }),
-
-  /**
-   * Revoke session
-   */
   revokeSession: protectedProcedure
     .use(requireAdmin())
     .input(z.object({ sessionId: z.number() }))
@@ -556,10 +452,6 @@ export const adminRouter = router({
       });
       return { success: true };
     }),
-
-  /**
-   * Revoke all user sessions
-   */
   revokeAllSessions: protectedProcedure
     .use(requireAdmin())
     .input(z.object({ userId: z.number() }))
@@ -578,10 +470,6 @@ export const adminRouter = router({
       });
       return { success: true };
     }),
-
-  /**
-   * Assign temporary role
-   */
   assignTemporaryRole: protectedProcedure
     .use(requireAdmin())
     .input(
@@ -595,7 +483,6 @@ export const adminRouter = router({
     .mutation(async ({ ctx, input }) => {
       const expiresAt = new Date(Date.now() + input.durationHours * 3600000);
       await assignTemporaryRole(input.userId, input.role, expiresAt, ctx.user.id, input.reason);
-      
       const user = await getUserById(input.userId);
       if (user) {
         await createNotification({
@@ -605,23 +492,14 @@ export const adminRouter = router({
           message: `You have been temporarily assigned the ${input.role} role until ${expiresAt.toLocaleString()}`,
         });
       }
-      
       return { success: true };
     }),
-
-  /**
-   * Get user temporary roles
-   */
   temporaryRoles: protectedProcedure
     .use(requireAdmin())
     .input(z.object({ userId: z.number() }))
     .query(async ({ input }) => {
       return getUserTemporaryRoles(input.userId);
     }),
-
-  /**
-   * Revoke temporary role
-   */
   revokeTemporaryRole: protectedProcedure
     .use(requireAdmin())
     .input(z.object({ assignmentId: z.number() }))
@@ -629,3 +507,4 @@ export const adminRouter = router({
       return revokeTemporaryRole(input.assignmentId);
     }),
 });
+

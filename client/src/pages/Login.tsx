@@ -1,8 +1,3 @@
-/**
- * Login page for RBAC application
- * Shows login button and role-based information
- */
-
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -12,7 +7,6 @@ import { APP_TITLE, getLogoUrl } from "@/const";
 import { useState } from "react";
 import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
-
 export default function Login() {
   const { isAuthenticated, loading } = useAuth();
   const utils = trpc.useUtils();
@@ -21,7 +15,6 @@ export default function Login() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
-
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100">
@@ -29,13 +22,10 @@ export default function Login() {
       </div>
     );
   }
-
   if (isAuthenticated) {
-    // Redirect to admin dashboard if already authenticated
-    navigate("/admin");
+    navigate("/posts");
     return null;
   }
-
   return (
   <div className="min-h-[100dvh] md:h-screen grid grid-cols-1 md:grid-cols-2 short:grid-cols-1 bg-white overflow-hidden max-w-[1440px] mx-auto">
       {/* Left: Info/Brand */}
@@ -48,7 +38,6 @@ export default function Login() {
               <p className="text-slate-300 text-xs">Secure role-based access control</p>
             </div>
           </div>
-
           <div className="mt-8 xl:mt-12 short:mt-6 space-y-6 xl:space-y-8 short:gap-4">
             <div>
               <h2 className="text-sm font-semibold uppercase tracking-wider text-slate-400">Available Roles</h2>
@@ -63,7 +52,6 @@ export default function Login() {
                     <p className="text-sm text-slate-300">Full access to all features and user management.</p>
                   </div>
                 </div>
-
                 <div className="flex items-start gap-3">
                   <Edit3 className="w-5 h-5 text-amber-400 mt-0.5" />
                   <div>
@@ -74,7 +62,6 @@ export default function Login() {
                     <p className="text-sm text-slate-300">Create and manage your own content.</p>
                   </div>
                 </div>
-
                 <div className="flex items-start gap-3">
                   <Eye className="w-5 h-5 text-emerald-400 mt-0.5" />
                   <div>
@@ -87,7 +74,6 @@ export default function Login() {
                 </div>
               </div>
             </div>
-
             <div className="short:hidden">
               <h2 className="text-sm font-semibold uppercase tracking-wider text-slate-400">Security Features</h2>
               <ul className="mt-4 space-y-2 text-sm text-slate-200">
@@ -99,10 +85,8 @@ export default function Login() {
             </div>
           </div>
         </div>
-
   <p className="text-[10px] text-slate-400">© {new Date().getFullYear()} {APP_TITLE}. All rights reserved.</p>
       </div>
-
       {/* Right: Action/Form */}
       <div className="flex items-center justify-center px-6 py-6 md:p-10 short:px-4 short:py-4 bg-white short:h-auto max-w-full">
         <div className="w-full max-w-sm md:max-w-md short:max-w-sm mx-auto">
@@ -125,7 +109,7 @@ export default function Login() {
                   try {
                     await loginMutation.mutateAsync({ username, password });
                     await utils.auth.me.invalidate();
-                    navigate("/admin");
+                    navigate("/posts");
                   } catch (err: any) {
                     setError(err?.message ?? "Login failed");
                   }
@@ -174,3 +158,4 @@ export default function Login() {
     </div>
   );
 }
+

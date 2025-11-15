@@ -3,7 +3,6 @@ import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { trpc } from "@/lib/trpc";
 import { Loader2 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-
 export default function AdminStatsPage() {
   return (
     <ProtectedRoute requiredRole="admin">
@@ -13,10 +12,8 @@ export default function AdminStatsPage() {
     </ProtectedRoute>
   );
 }
-
 function StatsTab() {
   const { data: stats, isLoading } = trpc.admin.stats.useQuery();
-
   if (isLoading) {
     return (
       <Card>
@@ -26,7 +23,6 @@ function StatsTab() {
       </Card>
     );
   }
-
   return (
     <div className="max-w-6xl mx-auto space-y-6">
       <div className="bg-white rounded-2xl shadow-lg p-8">
@@ -62,3 +58,4 @@ function StatsTab() {
     </div>
   );
 }
+

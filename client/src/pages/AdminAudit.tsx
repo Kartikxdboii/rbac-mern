@@ -3,7 +3,6 @@ import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { trpc } from "@/lib/trpc";
 import { Loader2, FileSearch } from "lucide-react";
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
-
 export default function AdminAuditPage() {
   return (
     <ProtectedRoute requiredRole="admin">
@@ -13,10 +12,8 @@ export default function AdminAuditPage() {
     </ProtectedRoute>
   );
 }
-
 function AuditLogsTab() {
   const { data: logs, isLoading } = trpc.admin.auditLogs.useQuery({ limit: 50, offset: 0 });
-
   if (isLoading) {
     return (
           <div className="space-y-6 page-wrap px-2 md:px-4 w-full max-w-[1400px] mx-auto overflow-x-hidden">
@@ -30,7 +27,6 @@ function AuditLogsTab() {
       </div>
     );
   }
-
   return (
       <div className="space-y-6 page-wrap px-2 md:px-4 w-full max-w-[1400px] mx-auto overflow-x-hidden">
       <div className="bg-white rounded-2xl shadow p-6">
@@ -72,3 +68,4 @@ function AuditLogsTab() {
     </div>
   );
 }
+

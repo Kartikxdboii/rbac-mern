@@ -10,9 +10,7 @@ import { ENV } from "./_core/env";
 import { verifyOwnerCredentials } from "./_core/localAuth";
 import { sdk } from "./_core/sdk";
 import * as db from "./db";
-
 export const appRouter = router({
-  // if you need to use socket.io, read and register route in server/_core/index.ts, all api should start with '/api/' so that the gateway can route correctly
   system: systemRouter,
   auth: router({
     me: publicProcedure.query(opts => opts.ctx.user),
@@ -30,12 +28,32 @@ export const appRouter = router({
           throw new Error("Local auth is disabled");
         }
         console.log('[Auth] Login attempt', { username: input.username });
+        const { getUserWithPassword } = await import('./db');
+        const { verifyPassword } = await import('./_core/localAuth');
+        const dbUser = await getUserWithPassword(input.username);
+        if (dbUser && dbUser.passwordHash) {
+          const valid = await verifyPassword(input.password, dbUser.passwordHash);
+          if (valid) {
+            const creds = { openId: dbUser.openId, name: dbUser.name || 'User' };
+            await db.upsertUser({
+              openId: creds.openId,
+              name: creds.name,
+              email: dbUser.email,
+              loginMethod: 'local',
+              lastSignedIn: new Date(),
+            });
+            const cookieOptions = getSessionCookieOptions(ctx.req);
+            const token = await sdk.createSessionToken(creds.openId, { name: creds.name });
+            console.log('[Auth] Database user login successful', { openId: creds.openId });
+            ctx.res.cookie(COOKIE_NAME, token, { ...cookieOptions });
+            return { success: true } as const;
+          }
+        }
         const creds = await verifyOwnerCredentials(input.username, input.password);
         if (!creds) {
           console.warn('[Auth] Invalid credentials for', input.username);
           throw new Error("Invalid username or password");
         }
-        // best effort: upsert user (ignored if no DB)
         try {
           await db.upsertUser({
             openId: creds.openId,
@@ -45,7 +63,6 @@ export const appRouter = router({
             lastSignedIn: new Date(),
           });
         } catch {}
-
         const cookieOptions = getSessionCookieOptions(ctx.req);
         const token = await sdk.createSessionToken(creds.openId, { name: creds.name });
         console.log('[Auth] Issuing session cookie', { openId: creds.openId, cookieOptions });
@@ -53,11 +70,9 @@ export const appRouter = router({
         return { success: true } as const;
       }),
   }),
-
-  // RBAC routers
   posts: postsRouter,
   admin: adminRouter,
   user: userRouter,
 });
-
 export type AppRouter = typeof appRouter;
+

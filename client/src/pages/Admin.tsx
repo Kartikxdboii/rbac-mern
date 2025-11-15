@@ -1,8 +1,3 @@
-/**
- * Admin dashboard for user and role management
- * Restricted to admin users only
- */
-
 import { useState } from "react";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
@@ -16,7 +11,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Loader2, Users, BarChart3, AlertCircle, Trash2, Eye, PlusCircle, Settings, Check } from "lucide-react";
 import { NavBar } from "@/components/NavBar";
-
 export default function Admin() {
   return (
     <ProtectedRoute requiredRole="admin">
@@ -24,11 +18,9 @@ export default function Admin() {
     </ProtectedRoute>
   );
 }
-
 function AdminDashboard() {
   const [selectedTab, setSelectedTab] = useState("users");
   const statsQuery = trpc.admin.stats.useQuery(undefined, { staleTime: 30_000 });
-
   return (
     <div className="min-h-screen flex flex-col">
       <NavBar />
@@ -38,7 +30,6 @@ function AdminDashboard() {
             <h1 className="text-3xl font-bold">Welcome, <span className="text-indigo-600">Admin 👋</span></h1>
             <p className="text-gray-500 mt-2">You have full access to system management.</p>
           </div>
-
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
             <Card className="rounded-2xl">
               <CardHeader>
@@ -109,7 +100,6 @@ function AdminDashboard() {
               </CardContent>
             </Card>
           </div>
-
           <Tabs value={selectedTab} onValueChange={setSelectedTab} className="space-y-4">
             <TabsList>
               <TabsTrigger value="users">Users</TabsTrigger>
@@ -122,7 +112,6 @@ function AdminDashboard() {
             <TabsContent value="stats" className="space-y-4"><StatsTab /></TabsContent>
             <TabsContent value="audit" className="space-y-4"><AuditLogsTab /></TabsContent>
           </Tabs>
-
           <section className="bg-gray-50 p-6 rounded-2xl mt-12 border">
             <h2 className="text-lg font-semibold mb-3">About Roles</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -155,34 +144,28 @@ function UsersTab() {
     offset: 0,
   });
   const { user: currentUser } = useAuth();
-
   const updateRoleMutation = trpc.admin.updateUserRole.useMutation({
     onSuccess: () => {
       refetch();
     },
   });
-
   const createUserMutation = trpc.admin.createUser.useMutation({
     onSuccess: () => {
       refetch();
       setIsCreateOpen(false);
     },
   });
-
   const deleteUserMutation = trpc.admin.deleteUser.useMutation({
     onSuccess: () => {
       refetch();
     },
   });
-
   const handleRoleChange = (userId: number, newRole: "admin" | "editor" | "viewer") => {
     updateRoleMutation.mutate({ userId, role: newRole });
   };
-
   const handleCreateUser = (formData: any) => {
     createUserMutation.mutate(formData);
   };
-
   if (isLoading) {
     return (
       <Card>
@@ -192,7 +175,6 @@ function UsersTab() {
       </Card>
     );
   }
-
   return (
     <Card>
       <CardHeader>
@@ -276,7 +258,6 @@ function UsersTab() {
     </Card>
   );
 }
-
 function RoleSelector({
   userId,
   currentRole,
@@ -307,7 +288,6 @@ function RoleSelector({
     </Select>
   );
 }
-
 function AddPermissionForm({
   role,
   availablePermissions,
@@ -322,7 +302,6 @@ function AddPermissionForm({
   isLoading: boolean;
 }) {
   const [selectedPermission, setSelectedPermission] = useState("");
-
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (selectedPermission) {
@@ -331,11 +310,9 @@ function AddPermissionForm({
       setSelectedPermission("");
     }
   };
-
   const unusedPermissions = availablePermissions.filter(
     (p) => !currentPermissions.includes(p.id)
   );
-
   return (
     <form onSubmit={handleSubmit} className="mt-4 p-3 border rounded-lg bg-muted/30 space-y-3">
       <div>
@@ -360,25 +337,21 @@ function AddPermissionForm({
     </form>
   );
 }
-
 function PermissionsTab() {
   const [editingRole, setEditingRole] = useState<string | null>(null);
   const { data: permissions, isLoading, refetch } = trpc.admin.rolePermissions.useQuery();
   const { data: availablePermissions } = trpc.admin.availablePermissions.useQuery();
-
   const removePermissionMutation = trpc.admin.removePermission.useMutation({
     onSuccess: () => {
       refetch();
     },
   });
-
   const addPermissionMutation = trpc.admin.addPermission.useMutation({
     onSuccess: () => {
       refetch();
       setEditingRole(null);
     },
   });
-
   if (isLoading) {
     return (
       <Card>
@@ -388,13 +361,11 @@ function PermissionsTab() {
       </Card>
     );
   }
-
   const groupedPermissions = {
     admin: permissions?.filter((p: any) => p.role === "admin") || [],
     editor: permissions?.filter((p: any) => p.role === "editor") || [],
     viewer: permissions?.filter((p: any) => p.role === "viewer") || [],
   };
-
   return (
     <div className="space-y-4">
       {Object.entries(groupedPermissions).map(([role, perms]: [string, any]) => (
@@ -477,10 +448,8 @@ function PermissionsTab() {
     </div>
   );
 }
-
 function StatsTab() {
   const { data: stats, isLoading } = trpc.admin.stats.useQuery();
-
   if (isLoading) {
     return (
       <Card>
@@ -490,7 +459,6 @@ function StatsTab() {
       </Card>
     );
   }
-
   return (
     <div className="space-y-4">
       <div className="grid md:grid-cols-4 gap-4">
@@ -502,7 +470,6 @@ function StatsTab() {
             <p className="text-2xl font-bold">{stats?.totalUsers}</p>
           </CardContent>
         </Card>
-
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium">Admins</CardTitle>
@@ -511,7 +478,6 @@ function StatsTab() {
             <p className="text-2xl font-bold">{stats?.roleStats.admin}</p>
           </CardContent>
         </Card>
-
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium">Editors</CardTitle>
@@ -520,7 +486,6 @@ function StatsTab() {
             <p className="text-2xl font-bold">{stats?.roleStats.editor}</p>
           </CardContent>
         </Card>
-
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium">Viewers</CardTitle>
@@ -530,7 +495,6 @@ function StatsTab() {
           </CardContent>
         </Card>
       </div>
-
       <Card>
         <CardHeader>
           <CardTitle>Recent Authorization Denials</CardTitle>
@@ -561,13 +525,11 @@ function StatsTab() {
     </div>
   );
 }
-
 function AuditLogsTab() {
   const { data: logs, isLoading } = trpc.admin.auditLogs.useQuery({
     limit: 50,
     offset: 0,
   });
-
   if (isLoading) {
     return (
       <Card>
@@ -577,7 +539,6 @@ function AuditLogsTab() {
       </Card>
     );
   }
-
   return (
     <Card>
       <CardHeader>
@@ -628,19 +589,16 @@ function AuditLogsTab() {
     </Card>
   );
 }
-
 function CreateUserForm({ onSubmit, isLoading }: { onSubmit: (data: any) => void; isLoading: boolean }) {
   const [formData, setFormData] = useState({
     name: "",
     email: "",
     role: "viewer",
   });
-
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     onSubmit(formData);
   };
-
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
@@ -682,3 +640,4 @@ function CreateUserForm({ onSubmit, isLoading }: { onSubmit: (data: any) => void
     </form>
   );
 }
+

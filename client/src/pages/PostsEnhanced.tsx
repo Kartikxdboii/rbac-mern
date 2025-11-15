@@ -14,8 +14,8 @@ import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { Loader2, Plus, Edit2, Trash2, MessageSquare, Share2, History, Tag, Send } from "lucide-react";
-
+import { Loader2, Plus, Edit2, Trash2, MessageSquare, Share2, Tag, Send } from "lucide-react";
+import { NavBar } from "@/components/NavBar";
 export default function PostsEnhanced() {
   const { user } = useAuth();
   const { hasPermission, isAdmin, isEditor } = usePermissions();
@@ -23,10 +23,7 @@ export default function PostsEnhanced() {
   const [editingPost, setEditingPost] = useState<number | null>(null);
   const [viewingComments, setViewingComments] = useState<number | null>(null);
   const [sharingPost, setSharingPost] = useState<number | null>(null);
-  const [viewingVersions, setViewingVersions] = useState<number | null>(null);
-
   const { data: postsData, isLoading, refetch } = trpc.posts.list.useQuery({ limit: 20, offset: 0 });
-
   const createPostMutation = trpc.posts.create.useMutation({
     onSuccess: () => {
       setIsCreateOpen(false);
@@ -34,7 +31,6 @@ export default function PostsEnhanced() {
       toast.success("Post created");
     },
   });
-
   const updatePostMutation = trpc.posts.update.useMutation({
     onSuccess: () => {
       setEditingPost(null);
@@ -42,17 +38,14 @@ export default function PostsEnhanced() {
       toast.success("Post updated");
     },
   });
-
   const deletePostMutation = trpc.posts.delete.useMutation({
     onSuccess: () => {
       refetch();
       toast.success("Post deleted");
     },
   });
-
-  const canEditPost = (authorId: number) => isAdmin() || (isEditor() && user?.id === authorId);
-  const canDeletePost = (authorId: number) => isAdmin() || (isEditor() && user?.id === authorId);
-
+  const canEditPost = (authorId: number) => isAdmin() || isEditor();
+  const canDeletePost = (authorId: number) => isAdmin() || isEditor();
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -60,9 +53,10 @@ export default function PostsEnhanced() {
       </div>
     );
   }
-
   return (
-    <div className="container mx-auto py-8">
+    <>
+      <NavBar />
+      <div className="container mx-auto py-8">
       <div className="flex justify-between items-center mb-8">
         <div>
           <h1 className="text-3xl font-bold">Posts</h1>
@@ -72,7 +66,6 @@ export default function PostsEnhanced() {
             {user?.role === "viewer" && "Read published posts"}
           </p>
         </div>
-
         <PermissionGate permission="posts:create">
           <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
             <DialogTrigger asChild>
@@ -91,7 +84,6 @@ export default function PostsEnhanced() {
           </Dialog>
         </PermissionGate>
       </div>
-
       {postsData?.posts && postsData.posts.length > 0 ? (
         <div className="grid gap-4">
           {postsData.posts.map((post: any) => (
@@ -142,18 +134,10 @@ export default function PostsEnhanced() {
                     <MessageSquare className="w-4 h-4 mr-2" />
                     Comments
                   </Button>
-                  {canEditPost(post.authorId) && (
-                    <>
-                      <Button variant="outline" size="sm" onClick={() => setSharingPost(post.id)}>
-                        <Share2 className="w-4 h-4 mr-2" />
-                        Share
-                      </Button>
-                      <Button variant="outline" size="sm" onClick={() => setViewingVersions(post.id)}>
-                        <History className="w-4 h-4 mr-2" />
-                        History
-                      </Button>
-                    </>
-                  )}
+                  <Button variant="outline" size="sm" onClick={() => setSharingPost(post.id)}>
+                    <Share2 className="w-4 h-4 mr-2" />
+                    Share
+                  </Button>
                 </div>
               </CardContent>
             </Card>
@@ -166,7 +150,6 @@ export default function PostsEnhanced() {
           </CardContent>
         </Card>
       )}
-
       {editingPost && (
         <Dialog open={!!editingPost} onOpenChange={() => setEditingPost(null)}>
           <DialogContent>
@@ -181,14 +164,12 @@ export default function PostsEnhanced() {
           </DialogContent>
         </Dialog>
       )}
-
       {viewingComments && <CommentsDialog postId={viewingComments} onClose={() => setViewingComments(null)} />}
       {sharingPost && <ShareDialog postId={sharingPost} onClose={() => setSharingPost(null)} />}
-      {viewingVersions && <VersionHistoryDialog postId={viewingVersions} onClose={() => setViewingVersions(null)} />}
-    </div>
+      </div>
+    </>
   );
 }
-
 function PostForm({ post, onSubmit, isLoading }: any) {
   const [formData, setFormData] = useState({
     title: post?.title || "",
@@ -197,7 +178,6 @@ function PostForm({ post, onSubmit, isLoading }: any) {
     visibility: post?.visibility || "private",
     tags: post?.tags || "",
   });
-
   return (
     <form onSubmit={(e) => { e.preventDefault(); onSubmit(formData); }} className="space-y-4">
       <div>
@@ -242,7 +222,6 @@ function PostForm({ post, onSubmit, isLoading }: any) {
     </form>
   );
 }
-
 function CommentsDialog({ postId, onClose }: { postId: number; onClose: () => void }) {
   const [comment, setComment] = useState("");
   const utils = trpc.useUtils();
@@ -254,7 +233,6 @@ function CommentsDialog({ postId, onClose }: { postId: number; onClose: () => vo
       toast.success("Comment added");
     },
   });
-
   return (
     <Dialog open onOpenChange={onClose}>
       <DialogContent className="max-w-2xl">
@@ -281,35 +259,57 @@ function CommentsDialog({ postId, onClose }: { postId: number; onClose: () => vo
     </Dialog>
   );
 }
-
 function ShareDialog({ postId, onClose }: { postId: number; onClose: () => void }) {
-  const [userId, setUserId] = useState("");
-  const utils = trpc.useUtils();
-  const { data: users } = trpc.admin.users.useQuery({ limit: 100, offset: 0 });
+  const [selectedUserId, setSelectedUserId] = useState("");
+  const { data: allUsers, isLoading } = trpc.posts.allUsers.useQuery();
   const sharePostMutation = trpc.posts.sharePost.useMutation({
     onSuccess: () => {
-      toast.success("Post shared");
+      toast.success("Post shared successfully! User will be notified.");
+      setSelectedUserId("");
       onClose();
     },
+    onError: (err) => {
+      toast.error(err.message || "Failed to share post");
+    },
   });
-
   return (
     <Dialog open onOpenChange={onClose}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Share Post</DialogTitle>
+          <DialogDescription>Select a user to share this post with. They will receive a notification.</DialogDescription>
         </DialogHeader>
         <div className="space-y-4">
-          <Select value={userId} onValueChange={setUserId}>
-            <SelectTrigger><SelectValue placeholder="Select user" /></SelectTrigger>
-            <SelectContent>
-              {users?.users.map((u: any) => (
-                <SelectItem key={u.id} value={u.id.toString()}>{u.name} ({u.email})</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Button onClick={() => sharePostMutation.mutate({ postId, userId: parseInt(userId), canEdit: false })} disabled={!userId} className="w-full">
-            Share
+          <div>
+            <Label>Select User</Label>
+            {isLoading ? (
+              <div className="flex items-center justify-center py-4">
+                <Loader2 className="w-4 h-4 animate-spin" />
+              </div>
+            ) : !allUsers || allUsers.length === 0 ? (
+              <p className="text-sm text-muted-foreground py-4">No users available</p>
+            ) : (
+              <Select value={selectedUserId} onValueChange={setSelectedUserId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Choose a user" />
+                </SelectTrigger>
+                <SelectContent>
+                  {allUsers.map((u: any) => (
+                    <SelectItem key={u.id} value={u.id.toString()}>
+                      {u.name || u.email || `User ${u.id}`} - {u.role}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+          </div>
+          <Button 
+            onClick={() => sharePostMutation.mutate({ postId, userId: parseInt(selectedUserId), canEdit: false })} 
+            disabled={!selectedUserId || sharePostMutation.isPending || isLoading} 
+            className="w-full"
+          >
+            {sharePostMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            Share Post
           </Button>
         </div>
       </DialogContent>
@@ -317,28 +317,3 @@ function ShareDialog({ postId, onClose }: { postId: number; onClose: () => void 
   );
 }
 
-function VersionHistoryDialog({ postId, onClose }: { postId: number; onClose: () => void }) {
-  const { data: versions } = trpc.posts.versions.useQuery({ postId });
-
-  return (
-    <Dialog open onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl">
-        <DialogHeader>
-          <DialogTitle>Version History</DialogTitle>
-        </DialogHeader>
-        <ScrollArea className="h-[400px]">
-          {versions?.map((v: any) => (
-            <div key={v.id} className="mb-4 p-4 border rounded">
-              <div className="flex justify-between mb-2">
-                <Badge>Version {v.versionNumber}</Badge>
-                <span className="text-xs text-muted-foreground">{new Date(v.createdAt).toLocaleString()}</span>
-              </div>
-              <h4 className="font-semibold">{v.title}</h4>
-              <p className="text-sm text-muted-foreground mt-2">{v.content}</p>
-            </div>
-          ))}
-        </ScrollArea>
-      </DialogContent>
-    </Dialog>
-  );
-}
